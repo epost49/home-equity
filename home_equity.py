@@ -8,7 +8,7 @@ Created on Sun Mar  7 17:22:29 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
-# import numpy-financial as npf
+import numpy_financial as npf
 import pandas as pd
 import seaborn as sb
 
@@ -76,6 +76,27 @@ def compare_scenarios(df_own, df_rent):
     sb.relplot(data=df_combined, x='Period',y='Dollars ($)',hue='Variable', kind="line", col='Rent/Own')
     return df_combined
 
+
+def mortgage_summary(home_price, int_rate, mortgage_yrs, down_pmt):
+    num_periods = 12 * mortgage_yrs
+    #period_arr = np.arange(num_periods) + 1  # array of months, starting at 1
+    loan_amt = home_price - down_pmt
+    #int_pmts = -npf.ipmt(int_rate / 12, period_arr, num_periods, loan_amt)  # array of monthly payments towards interest
+    #prin_pmts = -npf.ppmt(int_rate / 12, period_arr, num_periods, loan_amt)  # array of montly payments towards principle
+    monthly_pmt = -npf.pmt(int_rate / 12, num_periods, loan_amt)
+    total_int = monthly_pmt * num_periods - loan_amt
+    indent = "    "
+    print("Mortgage Summary")
+    print(indent + "Home price: $" + '{:.2f}'.format(home_price))
+    print(indent + "Down payment: $" + '{:.2f}'.format(down_pmt) + 
+            " (" + '{:.0f}'.format(down_pmt / home_price * 100) + "%)")
+    print(indent + "Loan amount: $" + '{:.2f}'.format(loan_amt))
+    print(indent + "Interest rate: " + '{:.2f}'.format(int_rate * 100) + "%")
+    print(indent + "Mortgage years: " + '{:.0f}'.format(mortgage_yrs))
+    print(indent + "Monthy payment: $" + '{:.2f}'.format(monthly_pmt))
+    print(indent + "Total interest payable: $" + '{:.2f}'.format(total_int))
+    print(indent + "Interest to loan ratio: " + '{:.2f}'.format(total_int / loan_amt))    
+    
 
 if __name__ == "__main__":
     home_price = 500000
