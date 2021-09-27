@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy_financial as npf
 import pandas as pd
 import seaborn as sb
+import pdb
 
 
 def payment_schedule(home_price, initial_savings, down_payment, interest_rate, loan_years, rent, monthly_budget):
@@ -168,12 +169,13 @@ def make_job_arr(salary=0, annual_raise=0, num_periods=60):
 
 
 
-def calc_wealth_arr(home_price, down_pmt, int_rate, mortgage_yrs, annual_income):
+def cash_flow_df(home_price, down_pmt, int_rate, mortgage_yrs, annual_income):
     annual_prop_tax = home_price * 0.0125  # need to verify tax rate
     annual_repairs = home_price * 0.01  # assume 1% of home value for repairs
     d_home_val = home_price * 0.03 / 12  # assume 3% annual appreciation
-    d_hoa = 300  # monthly HOA fee
     num_periods = 12 * mortgage_yrs
+    month_arr = np.arange(num_periods)
+    hoa_arr = np.repeat(300, num_periods)  # monthly HOA fee
     #period_arr = np.arange(num_periods) + 1  # array of months, starting at 1
     loan_amt = home_price - down_pmt
     monthly_pmt = -npf.pmt(int_rate / 12, num_periods, loan_amt)
@@ -187,19 +189,26 @@ def calc_wealth_arr(home_price, down_pmt, int_rate, mortgage_yrs, annual_income)
                                 -loan_amt)
     
     # make job income functions
-    job1_inc = make_job_arr(salary=123000)
-    job2_inc = make_job_arr(salary=60000)
+    job1_inc = make_job_arr(salary=123000, num_periods=num_periods)
+    job2_inc = make_job_arr(salary=60000, num_periods=num_periods)
     
     # loop over each month and fill in arrays with monthly deltas
-    wealth_arr = []
-    for n in range(num_periods):
+    income_arr = np.array([])
+    inc_tax_arr = np.array([])
+    prop_tax_arr = np.array([])
+    cap_gain_arr = np.array([])
+    repairs_arr = np.array([])
+    savings_arr = np.array([])
+    wealth_arr = np.array([])
+    for n in month_arr:
         d_inc1 = job1_inc[n]
         d_inc2 = job2_inc[n]
         d_inc = d_inc1 + d_inc2
         d_int_pmt = monthly_int_pmts[n]
-        d_mortgage_pmt = monthly_pmt[n]
+        d_mortgage_pmt = monthly_pmt
         d_princ_pmt = monthly_princ_pmts[n]
         d_prop_tax = annual_prop_tax / 12
+        d_hoa = hoa_arr[n]
         d_repairs = annual_repairs / 12
         d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt)
         incomes = {'job1_income':d_inc1,
@@ -211,9 +220,29 @@ def calc_wealth_arr(home_price, down_pmt, int_rate, mortgage_yrs, annual_income)
                     'Repairs':d_repairs}
         d_savings = calc_d_savings(incomes, expenses)
         d_wealth = calc_d_wealth(d_home_val, d_savings, d_princ_pmt)
-        wealth_arr.append(d_wealth)
+        #pdb.set_trace()
+        income_arr = np.append(income_arr, d_inc)
+        inc_tax_arr = np.append(inc_tax_arr, d_inc_tax)
+        prop_tax_arr = np.append(prop_tax_arr, d_prop_tax)
+        cap_gain_arr = np.append(cap_gain_arr, d_home_val)
+        repairs_arr = np.append(repairs_arr, d_repairs)
+        savings_arr = np.append(savings_arr, d_savings)
+        wealth_arr = np.append(wealth_arr, d_wealth)
     
-    return wealth_arr
+    #pdb.set_trace()
+    data = {'Month': month_arr,
+            'Income': income_arr,
+            'IncomeTax': -inc_tax_arr,
+            'CapitalGain': cap_gain_arr,
+            'PropertyTax': -prop_tax_arr,
+            'PrinciplePmt': -monthly_princ_pmts,
+            'InterestPmt': -monthly_int_pmts,
+            'HOA': -hoa_arr,
+            'Repairs': -repairs_arr,
+            'Savings': savings_arr,
+            'Wealth': wealth_arr}
+    df = pd.DataFrame.from_dict(data).set_index('Month')
+    return df
     
     
 
