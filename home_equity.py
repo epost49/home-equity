@@ -98,6 +98,125 @@ def mortgage_summary(home_price, int_rate, mortgage_yrs, down_pmt):
     print(indent + "Interest to loan ratio: " + '{:.2f}'.format(total_int / loan_amt))    
     
 
+def calc_d_savings(incomes, expenses):
+    #d_savings = d_inc - d_inc_tax - d_mortgage_pmt - d_hoa - d_prop_tax - d_repairs
+    d_savings = 0
+    for key in incomes:
+        d_savings += incomes[key]
+    for key in expenses:
+        d_savings -= expenses[key]
+    return d_savings
+
+
+def calc_d_wealth(d_home_val, d_savings, d_princ_pmt):
+    d_wealth = d_home_val + d_savings + d_princ_pmt
+    return d_wealth
+
+
+def calc_d_inc_tax(d_inc, d_int_pmt, annual_periods=12):
+    taxes = PayrollTax(annual_periods * d_inc, annual_periods * d_int_pmt)  # estimate tax based on annualized income
+    d_inc_tax = (taxes['FederalTax'] + taxes['StateTax'] + taxes['FICA']) / annual_periods  # convert back (e.g. to monthly)
+    return d_inc_tax
+    
+
+def PayrollTax(BaseSalary, Adjustments):
+    AGI = BaseSalary - Adjustments
+    FederalTaxBrackets = [(.1, 9875)
+                        , (.12, 40125)
+                        , (.22, 85525)
+                        , (.24, 163300)
+                        , (.32, 207340)
+                        , (.35, 311025)
+                        , (.37, 11311025)]
+
+    # Filing jointly
+    # FederalTaxBrackets = [(.1, 19750)
+    #                      , (.12, 80250)
+    #                      , (.22, 171050)
+    #                      , (.24, 326600)
+    #                      , (.32, 414700)
+    #                      , (.35, 622050)
+    #                      , (.37, 11311025)]
+    FederalTax = 0
+    last_bracket = 0
+    for percent, bracket in FederalTaxBrackets:
+        if bracket < AGI:
+            FederalTax = FederalTax + (bracket - last_bracket) * percent
+        else:
+            FederalTax = FederalTax + (AGI - last_bracket) * percent
+            break
+        last_bracket = bracket
+
+    StateTax = AGI * 0.09
+    FICA = AGI * .0765  # SS + Medicare
+    #Other = AGI * .1
+
+    return {'StateTax': StateTax
+        , 'FICA': FICA
+        , 'FederalTax': FederalTax}
+  
+
+def make_job_arr(salary=0, annual_raise=0, num_periods=60):
+    job_arr = []
+    for i in range(num_periods):
+        raise_factor = np.floor(i / 12)
+        current_salary = salary * (1 + annual_raise) ** raise_factor
+        monthly_salary = current_salary / 12
+        job_arr.append(monthly_salary)
+    
+    return job_arr
+
+
+
+def calc_wealth_arr(home_price, down_pmt, int_rate, mortgage_yrs, annual_income):
+    annual_prop_tax = home_price * 0.0125  # need to verify tax rate
+    annual_repairs = home_price * 0.01  # assume 1% of home value for repairs
+    d_home_val = home_price * 0.03 / 12  # assume 3% annual appreciation
+    d_hoa = 300  # monthly HOA fee
+    num_periods = 12 * mortgage_yrs
+    #period_arr = np.arange(num_periods) + 1  # array of months, starting at 1
+    loan_amt = home_price - down_pmt
+    monthly_pmt = -npf.pmt(int_rate / 12, num_periods, loan_amt)
+    monthly_princ_pmts = npf.ppmt(int_rate / 12, 
+                                np.arange(mortgage_yrs * 12) + 1, 
+                                mortgage_yrs  *12, 
+                                -loan_amt)
+    monthly_int_pmts = npf.ipmt(int_rate / 12, 
+                                np.arange(mortgage_yrs * 12) + 1, 
+                                mortgage_yrs  *12, 
+                                -loan_amt)
+    
+    # make job income functions
+    job1_inc = make_job_arr(salary=123000)
+    job2_inc = make_job_arr(salary=60000)
+    
+    # loop over each month and fill in arrays with monthly deltas
+    wealth_arr = []
+    for n in range(num_periods):
+        d_inc1 = job1_inc[n]
+        d_inc2 = job2_inc[n]
+        d_inc = d_inc1 + d_inc2
+        d_int_pmt = monthly_int_pmts[n]
+        d_mortgage_pmt = monthly_pmt[n]
+        d_princ_pmt = monthly_princ_pmts[n]
+        d_prop_tax = annual_prop_tax / 12
+        d_repairs = annual_repairs / 12
+        d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt)
+        incomes = {'job1_income':d_inc1,
+                   'job2_income':d_inc2}
+        expenses = {'mortgage_pmt':d_mortgage_pmt,
+                    'HOA':d_hoa,
+                    'PropTax':d_prop_tax,
+                    'IncomeTax':d_inc_tax,
+                    'Repairs':d_repairs}
+        d_savings = calc_d_savings(incomes, expenses)
+        d_wealth = calc_d_wealth(d_home_val, d_savings, d_princ_pmt)
+        wealth_arr.append(d_wealth)
+    
+    return wealth_arr
+    
+    
+
 if __name__ == "__main__":
     home_price = 500000
     down_payment = 100000
