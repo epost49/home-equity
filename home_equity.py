@@ -165,7 +165,7 @@ def make_job_arr(salary=0, annual_raise=0, num_periods=60):
         monthly_salary = current_salary / 12
         job_arr.append(monthly_salary)
     
-    return job_arr
+    return np.array(job_arr)
 
 
 
@@ -191,6 +191,7 @@ def cash_flow_df(home_price, down_pmt, int_rate, mortgage_yrs, annual_income):
     # make job income functions
     job1_inc = make_job_arr(salary=123000, num_periods=num_periods)
     job2_inc = make_job_arr(salary=60000, num_periods=num_periods)
+    inc_arr = job1_inc + job2_inc
     
     # loop over each month and fill in arrays with monthly deltas
     income_arr = np.array([])
@@ -201,9 +202,9 @@ def cash_flow_df(home_price, down_pmt, int_rate, mortgage_yrs, annual_income):
     savings_arr = np.array([])
     wealth_arr = np.array([])
     for n in month_arr:
-        d_inc1 = job1_inc[n]
-        d_inc2 = job2_inc[n]
-        d_inc = d_inc1 + d_inc2
+        #d_inc1 = job1_inc[n]
+        #d_inc2 = job2_inc[n]
+        d_inc = inc_arr[n]
         d_int_pmt = monthly_int_pmts[n]
         d_mortgage_pmt = monthly_pmt
         d_princ_pmt = monthly_princ_pmts[n]
