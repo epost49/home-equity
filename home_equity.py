@@ -180,10 +180,10 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
 
 def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
                  int_rate=0.025, mortgage_yrs=15, initial_total_income=125000, 
-                 annual_raise_rate=0.03, initial_cash=150000, monthly_hoa=400, 
+                 annual_raise_rate=0.03, monthly_hoa=400, 
                  prop_tax_rate=0.0125, house_apprecation_rate=0.03, 
                  stock_appreciation_rate=0.03, home_repair_rate=0.01, 
-                 initial_home_asset=0, initial_home_debt=0, initial_savings=0):
+                 initial_home_asset=0, initial_home_debt=0, initial_savings=150000):
     annual_prop_tax = home_price * prop_tax_rate  # need to verify tax rate
     annual_repairs = home_price * home_repair_rate  # assume constant % of home value for repairs
     d_home_val = home_price * house_apprecation_rate / 12  # assume 3% annual appreciation
@@ -276,9 +276,10 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     HomeAsset = initial_home_asset + np.cumsum(d_home_asset_arr)
     HomeDebt = initial_home_debt + np.cumsum(d_debt_arr)
     HomeEquity = HomeAsset - HomeDebt
+    PctLoanPaid = 100 * (1 - HomeDebt / loan_amt)
     Savings = initial_savings + np.cumsum(d_savings_arr)
     Wealth = initial_home_asset - initial_home_debt + initial_savings + np.cumsum(d_wealth_arr)
-    pdb.set_trace()
+    #pdb.set_trace()
     data = {'Month': month_arr,
             'd_Income': d_income_arr,
             'd_IncomeTax': d_inc_tax_arr,
@@ -294,6 +295,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
             'HomeAsset': HomeAsset, 
             'HomeDebt': HomeDebt,
             'HomeEquity': HomeEquity,
+            'PctLoanPaid': PctLoanPaid,
             'Savings': Savings,
             'Wealth': Wealth}
     df = pd.DataFrame.from_dict(data).set_index('Month')
@@ -302,6 +304,10 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     
 
 if __name__ == "__main__":
+    income=simple_job_arr(initial_salary=125000, annual_raise=0.03, num_periods=180)
+    df = buy_home_df(income, int_rate=0.026)
+    
+    '''
     home_price = 500000
     down_payment = 100000
     initial_savings = 2*down_payment
@@ -336,3 +342,4 @@ if __name__ == "__main__":
     y_cols = ['Debt', 'Equity', 'Wealth']
     equity_plotter(df, y_cols)
     compare_scenarios(df_own, df_rent)
+    '''
