@@ -110,8 +110,8 @@ def calc_d_wealth(d_assets, d_liabilities):
     return d_wealth
 
 
-def calc_d_inc_tax(d_inc, d_int_pmt, annual_periods=12):
-    taxes = PayrollTax(annual_periods * d_inc, annual_periods * d_int_pmt)  # estimate tax based on annualized income
+def calc_d_inc_tax(d_inc, d_int_pmt, annual_periods=12, JointFile=False):
+    taxes = PayrollTax(annual_periods * d_inc, annual_periods * d_int_pmt, JointFile)  # estimate tax based on annualized income
     d_inc_tax = (taxes['FederalTax'] + taxes['StateTax'] + taxes['FICA']) / annual_periods  # convert back (e.g. to monthly)
     return d_inc_tax
     
@@ -167,7 +167,7 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
 
 def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
                  int_rate=0.025, mortgage_yrs=15, initial_total_income=125000, 
-                 annual_raise_rate=0.03, monthly_hoa=400, 
+                 JointFile=False, annual_raise_rate=0.03, monthly_hoa=400, 
                  prop_tax_rate=0.0125, house_apprecation_rate=0.03, 
                  stock_appreciation_rate=0.03, home_repair_rate=0.01, 
                  initial_home_asset=0, initial_home_debt=0, initial_savings=150000):
@@ -192,7 +192,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     # Initialize monthly data arrays to capture home purchase in 1st 2 months
     month_arr = np.array([0, 1])
     d_income_arr = np.repeat(income_arr[0], 2)
-    d_inc_tax_arr = np.repeat(calc_d_inc_tax(income_arr[0], 0), 2)
+    d_inc_tax_arr = np.repeat(calc_d_inc_tax(income_arr[0], 0, JointFile=JointFile), 2)
     d_prop_tax_arr = np.array([0, 0])
     d_home_asset_arr = np.array([0, home_price])
     d_debt_arr = np.array([0, loan_amt])
@@ -218,7 +218,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_prop_tax = annual_prop_tax / 12
         d_hoa = hoa_arr[n]
         d_repairs = annual_repairs / 12
-        d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt)
+        d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt, JointFile=JointFile)
         d_expenses = [d_mortgage_pmt, d_hoa, d_prop_tax, d_inc_tax, d_repairs]
         d_savings = calc_d_savings(d_inc, d_expenses)
         d_asset_arr = [d_home_val, d_savings]
@@ -270,4 +270,4 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     
 if __name__ == "__main__":
     income=simple_job_arr(initial_salary=125000, annual_raise=0.03, num_periods=180)
-    df = buy_home_df(income, int_rate=0.026)
+    df = buy_home_df(income, int_rate=0.026, JointFile=True)
