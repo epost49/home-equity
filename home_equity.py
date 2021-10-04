@@ -204,6 +204,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     d_repairs_arr = np.array([0, 0])
     d_down_pmt_arr = np.array([0, down_pmt])
     d_rent_arr = np.array([0, 0])
+    d_stock_gain_arr = np.array([0, 0])
     d_expenses = [d_inc_tax_arr, d_prop_tax_arr, d_int_pmt_arr, 
                   d_prin_pmt_arr, d_hoa_arr, d_repairs_arr, d_down_pmt_arr]
     d_savings_arr = d_income_arr - np.sum(d_expenses,axis=0)
@@ -222,8 +223,9 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_hoa = hoa_arr[n]
         d_repairs = annual_repairs / 12
         d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt, JointFile=JointFile)
+        d_stock_gain = stock_appreciation_rate * np.sum(d_savings_arr) / 12  # stock gain based on total savings
         d_expenses = [d_mortgage_pmt, d_hoa, d_prop_tax, d_inc_tax, d_repairs, monthly_rent]
-        d_savings = calc_d_savings(d_inc, d_expenses)
+        d_savings = calc_d_savings([d_inc, d_stock_gain], d_expenses)
         d_asset_arr = [d_home_val, d_savings]
         d_liability_arr = [-d_prin_pmt]
         d_wealth = calc_d_wealth(d_asset_arr, d_liability_arr)
@@ -240,6 +242,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_hoa_arr = np.append(d_hoa_arr, d_hoa)
         d_repairs_arr = np.append(d_repairs_arr, d_repairs)
         d_rent_arr = np.append(d_rent_arr, monthly_rent)
+        d_stock_gain_arr = np.append(d_stock_gain_arr, d_stock_gain)
         d_savings_arr = np.append(d_savings_arr, d_savings)
         d_wealth_arr = np.append(d_wealth_arr, d_wealth)
     
@@ -261,6 +264,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
             'd_HOA': d_hoa_arr,
             'd_Repairs': d_repairs_arr,
             'd_Rent': d_rent_arr,
+            'd_StockGains': d_stock_gain_arr,
             'd_Savings': d_savings_arr,
             'd_Wealth': d_wealth_arr,
             'HomeAsset': HomeAsset, 
