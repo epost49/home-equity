@@ -166,11 +166,13 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
 
 
 def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
-                 int_rate=0.025, mortgage_yrs=15, initial_total_income=125000, 
-                 JointFile=False, annual_raise_rate=0.03, monthly_hoa=400, 
+                 int_rate=0.025, mortgage_yrs=15, monthly_rent=2200, 
+                 initial_total_income=125000, JointFile=False, 
+                 annual_raise_rate=0.03, monthly_hoa=400, 
                  prop_tax_rate=0.0125, house_apprecation_rate=0.03, 
                  stock_appreciation_rate=0.03, home_repair_rate=0.01, 
-                 initial_home_asset=0, initial_home_debt=0, initial_savings=150000):
+                 initial_home_asset=0, initial_home_debt=0, 
+                 initial_savings=150000):
     annual_prop_tax = home_price * prop_tax_rate  # need to verify tax rate
     annual_repairs = home_price * home_repair_rate  # assume constant % of home value for repairs
     d_home_val = home_price * house_apprecation_rate / 12  # assume 3% annual appreciation
@@ -201,6 +203,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     d_hoa_arr = np.array([0, 0])
     d_repairs_arr = np.array([0, 0])
     d_down_pmt_arr = np.array([0, down_pmt])
+    d_rent_arr = np.array([0, 0])
     d_expenses = [d_inc_tax_arr, d_prop_tax_arr, d_int_pmt_arr, 
                   d_prin_pmt_arr, d_hoa_arr, d_repairs_arr, d_down_pmt_arr]
     d_savings_arr = d_income_arr - np.sum(d_expenses,axis=0)
@@ -219,7 +222,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_hoa = hoa_arr[n]
         d_repairs = annual_repairs / 12
         d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt, JointFile=JointFile)
-        d_expenses = [d_mortgage_pmt, d_hoa, d_prop_tax, d_inc_tax, d_repairs]
+        d_expenses = [d_mortgage_pmt, d_hoa, d_prop_tax, d_inc_tax, d_repairs, monthly_rent]
         d_savings = calc_d_savings(d_inc, d_expenses)
         d_asset_arr = [d_home_val, d_savings]
         d_liability_arr = [-d_prin_pmt]
@@ -236,6 +239,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_prin_pmt_arr = np.append(d_prin_pmt_arr, d_prin_pmt)
         d_hoa_arr = np.append(d_hoa_arr, d_hoa)
         d_repairs_arr = np.append(d_repairs_arr, d_repairs)
+        d_rent_arr = np.append(d_rent_arr, monthly_rent)
         d_savings_arr = np.append(d_savings_arr, d_savings)
         d_wealth_arr = np.append(d_wealth_arr, d_wealth)
     
@@ -256,6 +260,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
             'd_InterestPmt': d_int_pmt_arr,
             'd_HOA': d_hoa_arr,
             'd_Repairs': d_repairs_arr,
+            'd_Rent': d_rent_arr,
             'd_Savings': d_savings_arr,
             'd_Wealth': d_wealth_arr,
             'HomeAsset': HomeAsset, 
@@ -270,4 +275,6 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     
 if __name__ == "__main__":
     income=simple_job_arr(initial_salary=125000, annual_raise=0.03, num_periods=180)
-    df = buy_home_df(income, int_rate=0.026, JointFile=True)
+    buy_df = buy_home_df(income, int_rate=0.026, monthly_rent=0, JointFile=True)
+    rent_df = buy_home_df(income, int_rate=0.026, home_price=0.01, 
+                          monthly_rent=2200, JointFile=True)
