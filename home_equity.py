@@ -99,26 +99,13 @@ def mortgage_summary(home_price, int_rate, mortgage_yrs, down_pmt):
     print(indent + "Interest to loan ratio: " + '{:.2f}'.format(total_int / loan_amt))    
     
 
-def calc_d_savings(d_incomes, d_expenses):
-    #d_savings = d_inc - d_inc_tax - d_mortgage_pmt - d_hoa - d_prop_tax - d_repairs
-    #d_savings = 0
-    #for key in incomes:
-    #    d_savings += incomes[key]
-    #for key in expenses:
-    #    d_savings -= expenses[key]
-    
+def calc_d_savings(d_incomes, d_expenses):   
     d_savings = np.sum(np.transpose(d_incomes), axis=0) - np.sum(np.transpose(d_expenses), axis=0)
     return d_savings
 
-'''
-def calc_d_wealth(d_home_val, d_savings, d_princ_pmt):
-    d_wealth = d_home_val + d_savings + d_princ_pmt
-    return d_wealth
-'''
 
 def calc_d_wealth(d_assets, d_liabilities):
     # This calculates a single delta wealth or an array of delta wealths
-    #d_wealth = np.sum(d_assets) - np.sum(d_liabilities)
     d_wealth =  np.sum(np.transpose(d_assets), axis=0) - np.sum(np.transpose(d_liabilities), axis=0)
     return d_wealth
 
@@ -129,24 +116,26 @@ def calc_d_inc_tax(d_inc, d_int_pmt, annual_periods=12):
     return d_inc_tax
     
 
-def PayrollTax(BaseSalary, Adjustments):
+def PayrollTax(BaseSalary, Adjustments, JointFile=False):
     AGI = BaseSalary - Adjustments
-    FederalTaxBrackets = [(.1, 9875)
-                        , (.12, 40125)
-                        , (.22, 85525)
-                        , (.24, 163300)
-                        , (.32, 207340)
-                        , (.35, 311025)
-                        , (.37, 11311025)]
+    if not JointFile:
+        FederalTaxBrackets = [(.1, 9875)
+                            , (.12, 40125)
+                            , (.22, 85525)
+                            , (.24, 163300)
+                            , (.32, 207340)
+                            , (.35, 311025)
+                            , (.37, 11311025)]
 
+    else:
     # Filing jointly
-    # FederalTaxBrackets = [(.1, 19750)
-    #                      , (.12, 80250)
-    #                      , (.22, 171050)
-    #                      , (.24, 326600)
-    #                      , (.32, 414700)
-    #                      , (.35, 622050)
-    #                      , (.37, 11311025)]
+        FederalTaxBrackets = [(.1, 19750)
+                              , (.12, 80250)
+                              , (.22, 171050)
+                              , (.24, 326600)
+                              , (.32, 414700)
+                              , (.35, 622050)
+                              , (.37, 11311025)]
     FederalTax = 0
     last_bracket = 0
     for percent, bracket in FederalTaxBrackets:
@@ -159,7 +148,6 @@ def PayrollTax(BaseSalary, Adjustments):
 
     StateTax = AGI * 0.09
     FICA = AGI * .0765  # SS + Medicare
-    #Other = AGI * .1
 
     return {'StateTax': StateTax
         , 'FICA': FICA
@@ -177,7 +165,6 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
     return np.array(job_arr)
 
 
-
 def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
                  int_rate=0.025, mortgage_yrs=15, initial_total_income=125000, 
                  annual_raise_rate=0.03, monthly_hoa=400, 
@@ -190,7 +177,6 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     num_periods = 12 * mortgage_yrs
     loan_month_arr = np.arange(num_periods)
     hoa_arr = np.repeat(monthly_hoa, num_periods)  # monthly HOA fees
-    #period_arr = np.arange(num_periods) + 1  # array of months, starting at 1
     down_pmt = down_pmt_pct * home_price
     loan_amt = home_price - down_pmt
     monthly_pmt = -npf.pmt(int_rate / 12, num_periods, loan_amt)
@@ -202,11 +188,6 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
                                 np.arange(mortgage_yrs * 12) + 1, 
                                 mortgage_yrs  *12, 
                                 -loan_amt)
-    
-    # make job income functions
-    #job1_inc = make_job_arr(salary=123000, num_periods=num_periods)
-    #job2_inc = make_job_arr(salary=60000, num_periods=num_periods)
-    #inc_arr = job1_inc + job2_inc
     
     # Initialize monthly data arrays to capture home purchase in 1st 2 months
     month_arr = np.array([0, 1])
@@ -220,22 +201,16 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     d_hoa_arr = np.array([0, 0])
     d_repairs_arr = np.array([0, 0])
     d_down_pmt_arr = np.array([0, down_pmt])
-    #pdb.set_trace()
     d_expenses = [d_inc_tax_arr, d_prop_tax_arr, d_int_pmt_arr, 
                   d_prin_pmt_arr, d_hoa_arr, d_repairs_arr, d_down_pmt_arr]
     d_savings_arr = d_income_arr - np.sum(d_expenses,axis=0)
     d_wealth_arr = d_savings_arr + d_home_asset_arr - d_debt_arr
-    
-    #d_savings_arr = calc_d_savings(d_income_arr, d_expenses)
-    #d_wealth_arr = calc_d_wealth(d_savings_arr + d_home_asset_arr, d_debt_arr)
-    #np.array([calc_d_wealth(), calc_d_wealth()])  # derived
 
     # loop over each month and fill in arrays with monthly deltas
     cur_month = month_arr[-1]  # current month will increment from end of month_arr
     for n in loan_month_arr:
         cur_month += 1
-        #d_inc1 = job1_inc[n]
-        #d_inc2 = job2_inc[n]
+
         d_inc = income_arr[n]
         d_int_pmt = monthly_int_pmts[n]
         d_mortgage_pmt = monthly_pmt
@@ -244,20 +219,12 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_hoa = hoa_arr[n]
         d_repairs = annual_repairs / 12
         d_inc_tax = calc_d_inc_tax(d_inc, d_int_pmt)
-        #incomes = {'job1_income':d_inc1,
-        #           'job2_income':d_inc2}
-        #expenses = {'mortgage_pmt':d_mortgage_pmt,
-        #            'HOA':d_hoa,
-        #            'PropTax':d_prop_tax,
-        #            'IncomeTax':d_inc_tax,
-        #            'Repairs':d_repairs}
         d_expenses = [d_mortgage_pmt, d_hoa, d_prop_tax, d_inc_tax, d_repairs]
         d_savings = calc_d_savings(d_inc, d_expenses)
-        #d_wealth = calc_d_wealth(d_home_val, d_savings, d_princ_pmt)
         d_asset_arr = [d_home_val, d_savings]
         d_liability_arr = [-d_prin_pmt]
         d_wealth = calc_d_wealth(d_asset_arr, d_liability_arr)
-        #pdb.set_trace()
+
         # Append monthly data to arrays
         month_arr = np.append(month_arr, cur_month)
         d_income_arr = np.append(d_income_arr, d_inc)
@@ -272,14 +239,13 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
         d_savings_arr = np.append(d_savings_arr, d_savings)
         d_wealth_arr = np.append(d_wealth_arr, d_wealth)
     
-    #pdb.set_trace()
     HomeAsset = initial_home_asset + np.cumsum(d_home_asset_arr)
     HomeDebt = initial_home_debt + np.cumsum(d_debt_arr)
     HomeEquity = HomeAsset - HomeDebt
     PctLoanPaid = 100 * (1 - HomeDebt / loan_amt)
     Savings = initial_savings + np.cumsum(d_savings_arr)
     Wealth = initial_home_asset - initial_home_debt + initial_savings + np.cumsum(d_wealth_arr)
-    #pdb.set_trace()
+
     data = {'Month': month_arr,
             'd_Income': d_income_arr,
             'd_IncomeTax': d_inc_tax_arr,
@@ -302,44 +268,6 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     return df
     
     
-
 if __name__ == "__main__":
     income=simple_job_arr(initial_salary=125000, annual_raise=0.03, num_periods=180)
     df = buy_home_df(income, int_rate=0.026)
-    
-    '''
-    home_price = 500000
-    down_payment = 100000
-    initial_savings = 2*down_payment
-    interest_rate = 0.09
-    term_years = 30
-    rent = 1000
-    monthly_budget = 3500
-    df_own = payment_schedule(home_price,
-                              initial_savings,
-                              down_payment,
-                              interest_rate,
-                              term_years,
-                              0,
-                              monthly_budget
-                              )
-    df_rent = payment_schedule(0,
-                               initial_savings,
-                               0,
-                               0,
-                               term_years,
-                               rent,
-                               monthly_budget
-                               )  # this is a bit messy
-    df = payment_schedule(home_price,
-                          initial_savings,
-                          down_payment,
-                          interest_rate,
-                          term_years,
-                          rent,
-                          monthly_budget
-                          )
-    y_cols = ['Debt', 'Equity', 'Wealth']
-    equity_plotter(df, y_cols)
-    compare_scenarios(df_own, df_rent)
-    '''
