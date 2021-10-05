@@ -165,6 +165,21 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
     return np.array(job_arr)
 
 
+def compare_housing(df1, df1_name, df2, df2_name):
+    # Compare wealth after 1, 2, 5, 10 years
+    yrs = np.array([1, 2, 5, 10])
+    for y in yrs:
+        print("Year " + str(y))
+        w1 = df1.loc[12 * y]['Wealth']
+        w2 = df2.loc[12 * y]['Wealth']
+        wdiff = w2 - w1
+        print("Wealth difference (" + df2_name + " - " + df1_name + ")")
+        print(str(wdiff))
+        #print(df1_name + " wealth: " + str(df1.loc[12 * y]['Wealth']))
+        #print(df2_name + " wealth: " + str(df2.loc[12 * y]['Wealth']))
+        print()
+
+
 def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
                  int_rate=0.025, mortgage_yrs=15, monthly_rent=2200, 
                  initial_total_income=125000, JointFile=False, 
