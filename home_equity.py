@@ -280,5 +280,5 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
 if __name__ == "__main__":
     income=simple_job_arr(initial_salary=125000, annual_raise=0.03, num_periods=180)
     buy_df = buy_home_df(income, int_rate=0.026, monthly_rent=0, JointFile=True)
-    rent_df = buy_home_df(income, int_rate=0.026, home_price=0.01, 
+    rent_df = buy_home_df(income, int_rate=0.026, home_price=0.01, monthly_hoa=0,
                           monthly_rent=2200, JointFile=True)
