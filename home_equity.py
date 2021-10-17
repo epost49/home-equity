@@ -88,14 +88,14 @@ def mortgage_summary(home_price, int_rate, mortgage_yrs, down_pmt):
     total_int = monthly_pmt * num_periods - loan_amt
     indent = "    "
     print("Mortgage Summary")
-    print(indent + "Home price: $" + '{:.2f}'.format(home_price))
-    print(indent + "Down payment: $" + '{:.2f}'.format(down_pmt) + 
+    print(indent + "Home price: " + '${:,.0f}'.format(home_price))
+    print(indent + "Down payment: " + '${:,.0f}'.format(down_pmt) + 
             " (" + '{:.0f}'.format(down_pmt / home_price * 100) + "%)")
-    print(indent + "Loan amount: $" + '{:.2f}'.format(loan_amt))
+    print(indent + "Loan amount: " + '${:,.0f}'.format(loan_amt))
     print(indent + "Interest rate: " + '{:.2f}'.format(int_rate * 100) + "%")
     print(indent + "Mortgage years: " + '{:.0f}'.format(mortgage_yrs))
-    print(indent + "Monthy payment: $" + '{:.2f}'.format(monthly_pmt))
-    print(indent + "Total interest payable: $" + '{:.2f}'.format(total_int))
+    print(indent + "Monthy mortgage payment: " + '${:,.0f}'.format(monthly_pmt))
+    print(indent + "Total interest payable: " + '${:,.0f}'.format(total_int))
     print(indent + "Interest to loan ratio: " + '{:.2f}'.format(total_int / loan_amt))    
     
 
@@ -167,6 +167,7 @@ def simple_job_arr(initial_salary=0, annual_raise=0, num_periods=60):
 
 def compare_housing(df1, df1_name, df2, df2_name):
     # Compare wealth after 1, 2, 5, 10 years
+    # include cost to sell?
     yrs = np.array([1, 2, 5, 10])
     for y in yrs:
         print("Year " + str(y))
@@ -174,16 +175,15 @@ def compare_housing(df1, df1_name, df2, df2_name):
         w2 = df2.loc[12 * y]['Wealth']
         wdiff = w2 - w1
         print("Wealth difference (" + df2_name + " - " + df1_name + ")")
-        print(str(wdiff))
+        print('{:.2f}'.format(wdiff))
         #print(df1_name + " wealth: " + str(df1.loc[12 * y]['Wealth']))
         #print(df2_name + " wealth: " + str(df2.loc[12 * y]['Wealth']))
         print()
 
 
-def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2, 
+def buy_home_df(income_arr, home_price=600000, down_pmt_pct=20, 
                  int_rate=0.025, mortgage_yrs=15, monthly_rent=2200, 
-                 initial_total_income=125000, JointFile=False, 
-                 annual_raise_rate=0.03, monthly_hoa=400, 
+                 initial_total_income=125000, JointFile=False, monthly_hoa=400, 
                  prop_tax_rate=0.0125, house_apprecation_rate=0.03, 
                  stock_appreciation_rate=0.03, home_repair_rate=0.01, 
                  initial_home_asset=0, initial_home_debt=0, 
@@ -194,7 +194,7 @@ def buy_home_df(income_arr, home_price=600000, down_pmt_pct=0.2,
     num_periods = 12 * mortgage_yrs
     loan_month_arr = np.arange(num_periods)
     hoa_arr = np.repeat(monthly_hoa, num_periods)  # monthly HOA fees
-    down_pmt = down_pmt_pct * home_price
+    down_pmt = down_pmt_pct / 100 * home_price
     loan_amt = home_price - down_pmt
     monthly_pmt = -npf.pmt(int_rate / 12, num_periods, loan_amt)
     monthly_prin_pmts = npf.ppmt(int_rate / 12, 
